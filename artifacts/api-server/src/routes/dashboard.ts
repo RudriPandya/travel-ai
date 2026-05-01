@@ -8,7 +8,7 @@ import {
   priceAlertsTable,
   notificationsTable,
 } from "@workspace/db";
-import { eq, and, gte, count, sum } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 const router = Router();
 
@@ -54,6 +54,16 @@ router.get("/dashboard/upcoming-trips", async (req, res) => {
 
   const upcoming = trips.filter((t) => t.status === "upcoming" || t.status === "planning");
   res.json(upcoming);
+});
+
+router.get("/dashboard/price-alerts", async (req, res) => {
+  const userId = 1;
+  const alerts = await db
+    .select()
+    .from(priceAlertsTable)
+    .where(and(eq(priceAlertsTable.userId, userId), eq(priceAlertsTable.active, true)))
+    .limit(5);
+  res.json(alerts);
 });
 
 export default router;
