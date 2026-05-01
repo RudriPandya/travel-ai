@@ -3,13 +3,40 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: AI-Powered Travel Management Platform API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: trips
+    description: Trip and itinerary management
+  - name: flights
+    description: Flight search
+  - name: hotels
+    description: Hotel search
+  - name: activities
+    description: Activities and experiences
+  - name: bookings
+    description: Booking management
+  - name: expenses
+    description: Expense management
+  - name: profile
+    description: User profile and preferences
+  - name: loyalty
+    description: Loyalty program
+  - name: corporate
+    description: Corporate travel management
+  - name: notifications
+    description: Notifications
+  - name: dashboard
+    description: Dashboard data
+  - name: ai
+    description: AI assistant and trip planning
+  - name: destinations
+    description: Destination discovery
+
 paths:
   /healthz:
     get:
@@ -24,6 +51,1176 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ==================== DASHBOARD ====================
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      summary: Get dashboard statistics
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /dashboard/upcoming-trips:
+    get:
+      operationId: getUpcomingTrips
+      tags: [dashboard]
+      summary: Get upcoming trips for dashboard
+      responses:
+        "200":
+          description: Upcoming trips
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TripSummary"
+
+  /dashboard/price-alerts:
+    get:
+      operationId: getPriceAlerts
+      tags: [dashboard]
+      summary: Get active price alerts
+      responses:
+        "200":
+          description: Price alerts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PriceAlert"
+
+  # ==================== TRIPS / ITINERARIES ====================
+  /trips:
+    get:
+      operationId: listTrips
+      tags: [trips]
+      summary: List user trips
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [planning, upcoming, active, completed, cancelled]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of trips
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Trip"
+    post:
+      operationId: createTrip
+      tags: [trips]
+      summary: Create a new trip
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTripBody"
+      responses:
+        "201":
+          description: Created trip
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trip"
+
+  /trips/{id}:
+    get:
+      operationId: getTrip
+      tags: [trips]
+      summary: Get a trip by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Trip detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TripDetail"
+        "404":
+          description: Trip not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateTrip
+      tags: [trips]
+      summary: Update a trip
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTripBody"
+      responses:
+        "200":
+          description: Updated trip
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trip"
+    delete:
+      operationId: deleteTrip
+      tags: [trips]
+      summary: Delete a trip
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /trips/{id}/itinerary-days:
+    get:
+      operationId: getItineraryDays
+      tags: [trips]
+      summary: Get itinerary days for a trip
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Itinerary days
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ItineraryDay"
+
+  /trips/{id}/activities:
+    post:
+      operationId: addActivityToTrip
+      tags: [trips]
+      summary: Add an activity to a trip
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddActivityBody"
+      responses:
+        "201":
+          description: Added activity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Activity"
+
+  /trips/{id}/optimize:
+    post:
+      operationId: optimizeTrip
+      tags: [trips]
+      summary: Run AI optimization on trip itinerary
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OptimizeTripBody"
+      responses:
+        "200":
+          description: Optimization result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OptimizationResult"
+
+  # ==================== AI PLANNING ====================
+  /ai/plan-trip:
+    post:
+      operationId: aiPlanTrip
+      tags: [ai]
+      summary: Generate AI trip itinerary from natural language
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiPlanTripBody"
+      responses:
+        "200":
+          description: Generated itinerary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiGeneratedItinerary"
+
+  /ai/chat:
+    post:
+      operationId: aiChat
+      tags: [ai]
+      summary: Send message to AI travel assistant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiChatBody"
+      responses:
+        "200":
+          description: AI response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiChatResponse"
+
+  /ai/chat/history:
+    get:
+      operationId: getChatHistory
+      tags: [ai]
+      summary: Get AI chat conversation history
+      responses:
+        "200":
+          description: Chat history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChatMessage"
+
+  # ==================== FLIGHT SEARCH ====================
+  /flights/search:
+    get:
+      operationId: searchFlights
+      tags: [flights]
+      summary: Search for flights
+      parameters:
+        - name: origin
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: destination
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: departureDate
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: returnDate
+          in: query
+          schema:
+            type: string
+        - name: passengers
+          in: query
+          schema:
+            type: integer
+        - name: cabinClass
+          in: query
+          schema:
+            type: string
+            enum: [economy, premium_economy, business, first]
+        - name: maxPrice
+          in: query
+          schema:
+            type: number
+        - name: stops
+          in: query
+          schema:
+            type: string
+            enum: [any, nonstop, one_stop]
+      responses:
+        "200":
+          description: Flight search results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FlightSearchResults"
+
+  /flights/price-calendar:
+    get:
+      operationId: getFlightPriceCalendar
+      tags: [flights]
+      summary: Get price calendar for a route
+      parameters:
+        - name: origin
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: destination
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: month
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Price calendar
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PriceCalendarEntry"
+
+  # ==================== HOTEL SEARCH ====================
+  /hotels/search:
+    get:
+      operationId: searchHotels
+      tags: [hotels]
+      summary: Search for hotels
+      parameters:
+        - name: destination
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: checkIn
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: checkOut
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: guests
+          in: query
+          schema:
+            type: integer
+        - name: minStars
+          in: query
+          schema:
+            type: integer
+        - name: maxPrice
+          in: query
+          schema:
+            type: number
+        - name: amenities
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Hotel search results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Hotel"
+
+  /hotels/{id}:
+    get:
+      operationId: getHotel
+      tags: [hotels]
+      summary: Get hotel details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Hotel detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HotelDetail"
+
+  # ==================== ACTIVITIES ====================
+  /activities/search:
+    get:
+      operationId: searchActivities
+      tags: [activities]
+      summary: Search activities and experiences
+      parameters:
+        - name: destination
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [adventure, culture, food, family, wellness, tours, nightlife, sports]
+        - name: maxPrice
+          in: query
+          schema:
+            type: number
+        - name: date
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Activity search results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityListing"
+
+  /activities/recommendations:
+    get:
+      operationId: getActivityRecommendations
+      tags: [activities]
+      summary: Get personalized activity recommendations
+      parameters:
+        - name: destination
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Recommendations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityListing"
+
+  # ==================== DESTINATIONS ====================
+  /destinations/popular:
+    get:
+      operationId: getPopularDestinations
+      tags: [destinations]
+      summary: Get popular destinations
+      responses:
+        "200":
+          description: Popular destinations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Destination"
+
+  /destinations/recommended:
+    get:
+      operationId: getRecommendedDestinations
+      tags: [destinations]
+      summary: Get personalized destination recommendations
+      responses:
+        "200":
+          description: Recommended destinations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Destination"
+
+  /destinations/{slug}:
+    get:
+      operationId: getDestination
+      tags: [destinations]
+      summary: Get destination details
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Destination detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DestinationDetail"
+
+  # ==================== BOOKINGS ====================
+  /bookings:
+    get:
+      operationId: listBookings
+      tags: [bookings]
+      summary: List user bookings
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [confirmed, pending, cancelled, completed]
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [flight, hotel, activity, car_rental, package]
+      responses:
+        "200":
+          description: List of bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Booking"
+    post:
+      operationId: createBooking
+      tags: [bookings]
+      summary: Create a booking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBookingBody"
+      responses:
+        "201":
+          description: Created booking
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+
+  /bookings/{id}:
+    get:
+      operationId: getBooking
+      tags: [bookings]
+      summary: Get booking detail
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Booking detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingDetail"
+    patch:
+      operationId: updateBooking
+      tags: [bookings]
+      summary: Update booking (modify)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateBookingBody"
+      responses:
+        "200":
+          description: Updated booking
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+
+  /bookings/{id}/cancel:
+    post:
+      operationId: cancelBooking
+      tags: [bookings]
+      summary: Cancel a booking
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CancelBookingBody"
+      responses:
+        "200":
+          description: Cancellation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CancellationResult"
+
+  # ==================== EXPENSES ====================
+  /expenses:
+    get:
+      operationId: listExpenses
+      tags: [expenses]
+      summary: List expenses
+      parameters:
+        - name: tripId
+          in: query
+          schema:
+            type: integer
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: reportId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of expenses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Expense"
+    post:
+      operationId: createExpense
+      tags: [expenses]
+      summary: Create an expense
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateExpenseBody"
+      responses:
+        "201":
+          description: Created expense
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Expense"
+
+  /expenses/{id}:
+    patch:
+      operationId: updateExpense
+      tags: [expenses]
+      summary: Update an expense
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateExpenseBody"
+      responses:
+        "200":
+          description: Updated expense
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Expense"
+    delete:
+      operationId: deleteExpense
+      tags: [expenses]
+      summary: Delete an expense
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /expenses/reports:
+    get:
+      operationId: listExpenseReports
+      tags: [expenses]
+      summary: List expense reports
+      responses:
+        "200":
+          description: List of expense reports
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ExpenseReport"
+    post:
+      operationId: createExpenseReport
+      tags: [expenses]
+      summary: Create an expense report
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateExpenseReportBody"
+      responses:
+        "201":
+          description: Created report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExpenseReport"
+
+  /expenses/summary:
+    get:
+      operationId: getExpenseSummary
+      tags: [expenses]
+      summary: Get expense summary by category
+      parameters:
+        - name: tripId
+          in: query
+          schema:
+            type: integer
+        - name: period
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Expense summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExpenseSummary"
+
+  # ==================== PROFILE ====================
+  /profile:
+    get:
+      operationId: getProfile
+      tags: [profile]
+      summary: Get current user profile
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+    patch:
+      operationId: updateProfile
+      tags: [profile]
+      summary: Update user profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfileBody"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+
+  /profile/documents:
+    get:
+      operationId: listDocuments
+      tags: [profile]
+      summary: List travel documents
+      responses:
+        "200":
+          description: Travel documents
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TravelDocument"
+    post:
+      operationId: createDocument
+      tags: [profile]
+      summary: Add a travel document
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDocumentBody"
+      responses:
+        "201":
+          description: Created document
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TravelDocument"
+
+  /profile/loyalty-programs:
+    get:
+      operationId: listLoyaltyPrograms
+      tags: [profile]
+      summary: List saved loyalty programs
+      responses:
+        "200":
+          description: Loyalty programs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SavedLoyaltyProgram"
+    post:
+      operationId: addLoyaltyProgram
+      tags: [profile]
+      summary: Add a loyalty program
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddLoyaltyProgramBody"
+      responses:
+        "201":
+          description: Added loyalty program
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SavedLoyaltyProgram"
+
+  # ==================== LOYALTY ====================
+  /loyalty/account:
+    get:
+      operationId: getLoyaltyAccount
+      tags: [loyalty]
+      summary: Get loyalty account status
+      responses:
+        "200":
+          description: Loyalty account
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoyaltyAccount"
+
+  /loyalty/transactions:
+    get:
+      operationId: listLoyaltyTransactions
+      tags: [loyalty]
+      summary: List points transactions
+      responses:
+        "200":
+          description: Points transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LoyaltyTransaction"
+
+  /loyalty/rewards:
+    get:
+      operationId: listRewards
+      tags: [loyalty]
+      summary: List available rewards for redemption
+      responses:
+        "200":
+          description: Available rewards
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Reward"
+
+  # ==================== PRICE ALERTS ====================
+  /price-alerts:
+    get:
+      operationId: listPriceAlerts
+      tags: [trips]
+      summary: List price alerts
+      responses:
+        "200":
+          description: Price alerts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PriceAlert"
+    post:
+      operationId: createPriceAlert
+      tags: [trips]
+      summary: Create a price alert
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePriceAlertBody"
+      responses:
+        "201":
+          description: Created price alert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PriceAlert"
+
+  /price-alerts/{id}:
+    delete:
+      operationId: deletePriceAlert
+      tags: [trips]
+      summary: Delete a price alert
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ==================== CORPORATE ====================
+  /corporate/overview:
+    get:
+      operationId: getCorporateOverview
+      tags: [corporate]
+      summary: Get corporate travel overview stats
+      responses:
+        "200":
+          description: Corporate overview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CorporateOverview"
+
+  /corporate/travelers:
+    get:
+      operationId: listCorporateTravelers
+      tags: [corporate]
+      summary: List corporate travelers
+      responses:
+        "200":
+          description: Corporate travelers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CorporateTraveler"
+
+  /corporate/approvals:
+    get:
+      operationId: listApprovals
+      tags: [corporate]
+      summary: List pending approvals
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, approved, rejected]
+      responses:
+        "200":
+          description: Approvals list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Approval"
+
+  /corporate/approvals/{id}/approve:
+    post:
+      operationId: approveRequest
+      tags: [corporate]
+      summary: Approve a travel request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Approved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Approval"
+
+  /corporate/approvals/{id}/reject:
+    post:
+      operationId: rejectRequest
+      tags: [corporate]
+      summary: Reject a travel request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RejectRequestBody"
+      responses:
+        "200":
+          description: Rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Approval"
+
+  /corporate/policy:
+    get:
+      operationId: getTravelPolicy
+      tags: [corporate]
+      summary: Get company travel policy
+      responses:
+        "200":
+          description: Travel policy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TravelPolicy"
+    patch:
+      operationId: updateTravelPolicy
+      tags: [corporate]
+      summary: Update company travel policy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTravelPolicyBody"
+      responses:
+        "200":
+          description: Updated policy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TravelPolicy"
+
+  /corporate/spend-report:
+    get:
+      operationId: getCorporateSpendReport
+      tags: [corporate]
+      summary: Get corporate spend analytics
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+        - name: groupBy
+          in: query
+          schema:
+            type: string
+            enum: [department, traveler, destination, category]
+      responses:
+        "200":
+          description: Spend report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SpendReport"
+
+  # ==================== NOTIFICATIONS ====================
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [notifications]
+      summary: List notifications
+      parameters:
+        - name: unreadOnly
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+
+  /notifications/{id}/read:
+    post:
+      operationId: markNotificationRead
+      tags: [notifications]
+      summary: Mark notification as read
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Marked as read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+
+  /notifications/read-all:
+    post:
+      operationId: markAllNotificationsRead
+      tags: [notifications]
+      summary: Mark all notifications as read
+      responses:
+        "200":
+          description: All marked as read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +1231,1982 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required:
+        - success
+
+    DashboardStats:
+      type: object
+      properties:
+        totalTrips:
+          type: integer
+        upcomingTrips:
+          type: integer
+        totalSpent:
+          type: number
+        loyaltyPoints:
+          type: integer
+        loyaltyTier:
+          type: string
+        savedOnBookings:
+          type: number
+        activeAlerts:
+          type: integer
+        pendingExpenses:
+          type: integer
+        carbonOffset:
+          type: number
+      required:
+        - totalTrips
+        - upcomingTrips
+        - totalSpent
+        - loyaltyPoints
+        - loyaltyTier
+        - savedOnBookings
+        - activeAlerts
+        - pendingExpenses
+        - carbonOffset
+
+    TripSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        destination:
+          type: string
+        startDate:
+          type: string
+        endDate:
+          type: string
+        status:
+          type: string
+        coverImageUrl:
+          type: ["string", "null"]
+        totalBudget:
+          type: ["number", "null"]
+        totalSpent:
+          type: ["number", "null"]
+        daysUntil:
+          type: ["integer", "null"]
+        travelers:
+          type: integer
+      required:
+        - id
+        - name
+        - destination
+        - startDate
+        - endDate
+        - status
+        - coverImageUrl
+        - totalBudget
+        - totalSpent
+        - daysUntil
+        - travelers
+
+    Trip:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        destination:
+          type: string
+        startDate:
+          type: string
+        endDate:
+          type: string
+        status:
+          type: string
+          enum: [planning, upcoming, active, completed, cancelled]
+        coverImageUrl:
+          type: ["string", "null"]
+        totalBudget:
+          type: ["number", "null"]
+        totalSpent:
+          type: ["number", "null"]
+        travelers:
+          type: integer
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required:
+        - id
+        - name
+        - destination
+        - startDate
+        - endDate
+        - status
+        - coverImageUrl
+        - totalBudget
+        - totalSpent
+        - travelers
+        - notes
+        - createdAt
+        - updatedAt
+
+    TripDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        destination:
+          type: string
+        startDate:
+          type: string
+        endDate:
+          type: string
+        status:
+          type: string
+        coverImageUrl:
+          type: ["string", "null"]
+        totalBudget:
+          type: ["number", "null"]
+        totalSpent:
+          type: ["number", "null"]
+        travelers:
+          type: integer
+        notes:
+          type: ["string", "null"]
+        itineraryDays:
+          type: array
+          items:
+            $ref: "#/components/schemas/ItineraryDay"
+        bookings:
+          type: array
+          items:
+            $ref: "#/components/schemas/Booking"
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required:
+        - id
+        - name
+        - destination
+        - startDate
+        - endDate
+        - status
+        - coverImageUrl
+        - totalBudget
+        - totalSpent
+        - travelers
+        - notes
+        - itineraryDays
+        - bookings
+        - createdAt
+        - updatedAt
+
+    CreateTripBody:
+      type: object
+      properties:
+        name:
+          type: string
+        destination:
+          type: string
+        startDate:
+          type: string
+        endDate:
+          type: string
+        totalBudget:
+          type: ["number", "null"]
+        travelers:
+          type: integer
+        notes:
+          type: ["string", "null"]
+      required:
+        - name
+        - destination
+        - startDate
+        - endDate
+        - travelers
+
+    UpdateTripBody:
+      type: object
+      properties:
+        name:
+          type: string
+        destination:
+          type: string
+        startDate:
+          type: string
+        endDate:
+          type: string
+        status:
+          type: string
+        totalBudget:
+          type: ["number", "null"]
+        travelers:
+          type: integer
+        notes:
+          type: ["string", "null"]
+        coverImageUrl:
+          type: ["string", "null"]
+
+    ItineraryDay:
+      type: object
+      properties:
+        id:
+          type: integer
+        tripId:
+          type: integer
+        dayNumber:
+          type: integer
+        date:
+          type: string
+        title:
+          type: ["string", "null"]
+        activities:
+          type: array
+          items:
+            $ref: "#/components/schemas/Activity"
+        estimatedCost:
+          type: ["number", "null"]
+        notes:
+          type: ["string", "null"]
+      required:
+        - id
+        - tripId
+        - dayNumber
+        - date
+        - title
+        - activities
+        - estimatedCost
+        - notes
+
+    Activity:
+      type: object
+      properties:
+        id:
+          type: integer
+        dayId:
+          type: ["integer", "null"]
+        tripId:
+          type: integer
+        timeSlot:
+          type: string
+          enum: [morning, afternoon, evening, flexible]
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        location:
+          type: ["string", "null"]
+        estimatedCost:
+          type: ["number", "null"]
+        duration:
+          type: ["integer", "null"]
+        category:
+          type: ["string", "null"]
+        isBooked:
+          type: boolean
+        imageUrl:
+          type: ["string", "null"]
+        tips:
+          type: ["string", "null"]
+      required:
+        - id
+        - dayId
+        - tripId
+        - timeSlot
+        - name
+        - description
+        - location
+        - estimatedCost
+        - duration
+        - category
+        - isBooked
+        - imageUrl
+        - tips
+
+    AddActivityBody:
+      type: object
+      properties:
+        dayId:
+          type: ["integer", "null"]
+        timeSlot:
+          type: string
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        location:
+          type: ["string", "null"]
+        estimatedCost:
+          type: ["number", "null"]
+        duration:
+          type: ["integer", "null"]
+        category:
+          type: ["string", "null"]
+      required:
+        - timeSlot
+        - name
+
+    OptimizeTripBody:
+      type: object
+      properties:
+        optimizationType:
+          type: string
+          enum: [route, budget, time, weather]
+      required:
+        - optimizationType
+
+    OptimizationResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        changes:
+          type: integer
+        summary:
+          type: string
+        estimatedSavings:
+          type: ["number", "null"]
+      required:
+        - success
+        - changes
+        - summary
+        - estimatedSavings
+
+    AiPlanTripBody:
+      type: object
+      properties:
+        prompt:
+          type: string
+        variant:
+          type: string
+          enum: [budget, balanced, premium]
+        context:
+          type: ["string", "null"]
+      required:
+        - prompt
+        - variant
+
+    AiGeneratedItinerary:
+      type: object
+      properties:
+        name:
+          type: string
+        destination:
+          type: string
+        duration:
+          type: integer
+        estimatedBudget:
+          type: number
+        summary:
+          type: string
+        days:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiDay"
+        tags:
+          type: array
+          items:
+            type: string
+      required:
+        - name
+        - destination
+        - duration
+        - estimatedBudget
+        - summary
+        - days
+        - tags
+
+    AiDay:
+      type: object
+      properties:
+        dayNumber:
+          type: integer
+        title:
+          type: string
+        activities:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiActivity"
+        estimatedCost:
+          type: number
+        tip:
+          type: string
+      required:
+        - dayNumber
+        - title
+        - activities
+        - estimatedCost
+        - tip
+
+    AiActivity:
+      type: object
+      properties:
+        timeSlot:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        location:
+          type: string
+        duration:
+          type: integer
+        estimatedCost:
+          type: number
+        category:
+          type: string
+        tips:
+          type: string
+      required:
+        - timeSlot
+        - name
+        - description
+        - location
+        - duration
+        - estimatedCost
+        - category
+        - tips
+
+    AiChatBody:
+      type: object
+      properties:
+        message:
+          type: string
+        sessionId:
+          type: ["string", "null"]
+        context:
+          type: ["string", "null"]
+      required:
+        - message
+
+    AiChatResponse:
+      type: object
+      properties:
+        reply:
+          type: string
+        sessionId:
+          type: string
+        suggestions:
+          type: array
+          items:
+            type: string
+        type:
+          type: string
+          enum: [general, booking, planning, alert, info]
+      required:
+        - reply
+        - sessionId
+        - suggestions
+        - type
+
+    ChatMessage:
+      type: object
+      properties:
+        id:
+          type: integer
+        role:
+          type: string
+          enum: [user, assistant]
+        content:
+          type: string
+        createdAt:
+          type: string
+        sessionId:
+          type: string
+      required:
+        - id
+        - role
+        - content
+        - createdAt
+        - sessionId
+
+    FlightSearchResults:
+      type: object
+      properties:
+        outbound:
+          type: array
+          items:
+            $ref: "#/components/schemas/Flight"
+        return:
+          type: array
+          items:
+            $ref: "#/components/schemas/Flight"
+        meta:
+          $ref: "#/components/schemas/SearchMeta"
+      required:
+        - outbound
+        - return
+        - meta
+
+    Flight:
+      type: object
+      properties:
+        id:
+          type: string
+        airline:
+          type: string
+        airlineCode:
+          type: string
+        airlineLogo:
+          type: ["string", "null"]
+        flightNumber:
+          type: string
+        origin:
+          type: string
+        destination:
+          type: string
+        departure:
+          type: string
+        arrival:
+          type: string
+        duration:
+          type: integer
+        stops:
+          type: integer
+        price:
+          type: number
+        currency:
+          type: string
+        cabinClass:
+          type: string
+        baggageIncluded:
+          type: boolean
+        refundable:
+          type: boolean
+        dealScore:
+          type: number
+        carbonKg:
+          type: number
+        seatsLeft:
+          type: ["integer", "null"]
+      required:
+        - id
+        - airline
+        - airlineCode
+        - airlineLogo
+        - flightNumber
+        - origin
+        - destination
+        - departure
+        - arrival
+        - duration
+        - stops
+        - price
+        - currency
+        - cabinClass
+        - baggageIncluded
+        - refundable
+        - dealScore
+        - carbonKg
+        - seatsLeft
+
+    PriceCalendarEntry:
+      type: object
+      properties:
+        date:
+          type: string
+        price:
+          type: number
+        available:
+          type: boolean
+        priceLevel:
+          type: string
+          enum: [low, medium, high]
+      required:
+        - date
+        - price
+        - available
+        - priceLevel
+
+    SearchMeta:
+      type: object
+      properties:
+        total:
+          type: integer
+        cheapest:
+          type: number
+        fastest:
+          type: integer
+        bestDeal:
+          type: string
+      required:
+        - total
+        - cheapest
+        - fastest
+        - bestDeal
+
+    Hotel:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        destination:
+          type: string
+        address:
+          type: string
+        stars:
+          type: integer
+        reviewScore:
+          type: number
+        reviewCount:
+          type: integer
+        pricePerNight:
+          type: number
+        currency:
+          type: string
+        imageUrl:
+          type: ["string", "null"]
+        amenities:
+          type: array
+          items:
+            type: string
+        freeCancellation:
+          type: boolean
+        aiSummary:
+          type: ["string", "null"]
+        dealScore:
+          type: number
+        distanceFromCenter:
+          type: number
+        neighborhood:
+          type: ["string", "null"]
+      required:
+        - id
+        - name
+        - destination
+        - address
+        - stars
+        - reviewScore
+        - reviewCount
+        - pricePerNight
+        - currency
+        - imageUrl
+        - amenities
+        - freeCancellation
+        - aiSummary
+        - dealScore
+        - distanceFromCenter
+        - neighborhood
+
+    HotelDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        destination:
+          type: string
+        address:
+          type: string
+        stars:
+          type: integer
+        reviewScore:
+          type: number
+        reviewCount:
+          type: integer
+        pricePerNight:
+          type: number
+        currency:
+          type: string
+        imageUrl:
+          type: ["string", "null"]
+        amenities:
+          type: array
+          items:
+            type: string
+        freeCancellation:
+          type: boolean
+        aiSummary:
+          type: ["string", "null"]
+        dealScore:
+          type: number
+        distanceFromCenter:
+          type: number
+        neighborhood:
+          type: ["string", "null"]
+        rooms:
+          type: array
+          items:
+            $ref: "#/components/schemas/HotelRoom"
+        pros:
+          type: array
+          items:
+            type: string
+        cons:
+          type: array
+          items:
+            type: string
+      required:
+        - id
+        - name
+        - destination
+        - address
+        - stars
+        - reviewScore
+        - reviewCount
+        - pricePerNight
+        - currency
+        - imageUrl
+        - amenities
+        - freeCancellation
+        - aiSummary
+        - dealScore
+        - distanceFromCenter
+        - neighborhood
+        - rooms
+        - pros
+        - cons
+
+    HotelRoom:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        pricePerNight:
+          type: number
+        maxGuests:
+          type: integer
+        bedType:
+          type: string
+        available:
+          type: boolean
+      required:
+        - id
+        - name
+        - pricePerNight
+        - maxGuests
+        - bedType
+        - available
+
+    ActivityListing:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        destination:
+          type: string
+        category:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        currency:
+          type: string
+        duration:
+          type: integer
+        reviewScore:
+          type: number
+        reviewCount:
+          type: integer
+        imageUrl:
+          type: ["string", "null"]
+        bookInAdvance:
+          type: boolean
+        groupSizeMin:
+          type: integer
+        groupSizeMax:
+          type: integer
+        tags:
+          type: array
+          items:
+            type: string
+      required:
+        - id
+        - name
+        - destination
+        - category
+        - description
+        - price
+        - currency
+        - duration
+        - reviewScore
+        - reviewCount
+        - imageUrl
+        - bookInAdvance
+        - groupSizeMin
+        - groupSizeMax
+        - tags
+
+    Destination:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        country:
+          type: string
+        slug:
+          type: string
+        imageUrl:
+          type: string
+        tagline:
+          type: string
+        avgFlightPrice:
+          type: ["number", "null"]
+        avgHotelPrice:
+          type: ["number", "null"]
+        bestMonths:
+          type: array
+          items:
+            type: string
+        tags:
+          type: array
+          items:
+            type: string
+        dealScore:
+          type: ["number", "null"]
+      required:
+        - id
+        - name
+        - country
+        - slug
+        - imageUrl
+        - tagline
+        - avgFlightPrice
+        - avgHotelPrice
+        - bestMonths
+        - tags
+        - dealScore
+
+    DestinationDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        country:
+          type: string
+        slug:
+          type: string
+        imageUrl:
+          type: string
+        tagline:
+          type: string
+        description:
+          type: string
+        avgFlightPrice:
+          type: ["number", "null"]
+        avgHotelPrice:
+          type: ["number", "null"]
+        bestMonths:
+          type: array
+          items:
+            type: string
+        tags:
+          type: array
+          items:
+            type: string
+        highlights:
+          type: array
+          items:
+            type: string
+        weather:
+          type: object
+          properties:
+            jan:
+              type: string
+            feb:
+              type: string
+            mar:
+              type: string
+            apr:
+              type: string
+            may:
+              type: string
+            jun:
+              type: string
+            jul:
+              type: string
+            aug:
+              type: string
+            sep:
+              type: string
+            oct:
+              type: string
+            nov:
+              type: string
+            dec:
+              type: string
+          required: [jan, feb, mar, apr, may, jun, jul, aug, sep, oct, nov, dec]
+        visaInfo:
+          type: string
+        currency:
+          type: string
+        language:
+          type: string
+        timezone:
+          type: string
+      required:
+        - id
+        - name
+        - country
+        - slug
+        - imageUrl
+        - tagline
+        - description
+        - avgFlightPrice
+        - avgHotelPrice
+        - bestMonths
+        - tags
+        - highlights
+        - weather
+        - visaInfo
+        - currency
+        - language
+        - timezone
+
+    Booking:
+      type: object
+      properties:
+        id:
+          type: integer
+        tripId:
+          type: ["integer", "null"]
+        type:
+          type: string
+          enum: [flight, hotel, activity, car_rental, package]
+        status:
+          type: string
+          enum: [confirmed, pending, cancelled, completed]
+        reference:
+          type: string
+        providerName:
+          type: string
+        description:
+          type: string
+        startDate:
+          type: string
+        endDate:
+          type: ["string", "null"]
+        amount:
+          type: number
+        currency:
+          type: string
+        passengerCount:
+          type: integer
+        isRefundable:
+          type: boolean
+        createdAt:
+          type: string
+      required:
+        - id
+        - tripId
+        - type
+        - status
+        - reference
+        - providerName
+        - description
+        - startDate
+        - endDate
+        - amount
+        - currency
+        - passengerCount
+        - isRefundable
+        - createdAt
+
+    BookingDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        tripId:
+          type: ["integer", "null"]
+        type:
+          type: string
+        status:
+          type: string
+        reference:
+          type: string
+        providerName:
+          type: string
+        description:
+          type: string
+        startDate:
+          type: string
+        endDate:
+          type: ["string", "null"]
+        amount:
+          type: number
+        currency:
+          type: string
+        passengerCount:
+          type: integer
+        isRefundable:
+          type: boolean
+        passengers:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+          properties:
+            origin:
+              type: ["string", "null"]
+            destination:
+              type: ["string", "null"]
+            flightNumber:
+              type: ["string", "null"]
+            seatNumbers:
+              type: ["string", "null"]
+            hotelAddress:
+              type: ["string", "null"]
+            confirmationDetails:
+              type: ["string", "null"]
+          required:
+            - origin
+            - destination
+            - flightNumber
+            - seatNumbers
+            - hotelAddress
+            - confirmationDetails
+        createdAt:
+          type: string
+      required:
+        - id
+        - tripId
+        - type
+        - status
+        - reference
+        - providerName
+        - description
+        - startDate
+        - endDate
+        - amount
+        - currency
+        - passengerCount
+        - isRefundable
+        - passengers
+        - metadata
+        - createdAt
+
+    CreateBookingBody:
+      type: object
+      properties:
+        tripId:
+          type: ["integer", "null"]
+        type:
+          type: string
+        providerName:
+          type: string
+        description:
+          type: string
+        startDate:
+          type: string
+        endDate:
+          type: ["string", "null"]
+        amount:
+          type: number
+        currency:
+          type: string
+        passengerCount:
+          type: integer
+        isRefundable:
+          type: boolean
+      required:
+        - type
+        - providerName
+        - description
+        - startDate
+        - amount
+        - currency
+        - passengerCount
+        - isRefundable
+
+    UpdateBookingBody:
+      type: object
+      properties:
+        status:
+          type: string
+        startDate:
+          type: string
+        endDate:
+          type: ["string", "null"]
+
+    CancelBookingBody:
+      type: object
+      properties:
+        reason:
+          type: string
+      required:
+        - reason
+
+    CancellationResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        refundAmount:
+          type: number
+        refundTimeline:
+          type: string
+        message:
+          type: string
+      required:
+        - success
+        - refundAmount
+        - refundTimeline
+        - message
+
+    Expense:
+      type: object
+      properties:
+        id:
+          type: integer
+        tripId:
+          type: ["integer", "null"]
+        reportId:
+          type: ["integer", "null"]
+        category:
+          type: string
+          enum: [accommodation, flights, transport, meals, activities, entertainment, telecoms, office, other]
+        description:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+        amountUsd:
+          type: number
+        date:
+          type: string
+        merchant:
+          type: ["string", "null"]
+        receiptUrl:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [pending, approved, rejected, reimbursed]
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required:
+        - id
+        - tripId
+        - reportId
+        - category
+        - description
+        - amount
+        - currency
+        - amountUsd
+        - date
+        - merchant
+        - receiptUrl
+        - status
+        - notes
+        - createdAt
+
+    CreateExpenseBody:
+      type: object
+      properties:
+        tripId:
+          type: ["integer", "null"]
+        reportId:
+          type: ["integer", "null"]
+        category:
+          type: string
+        description:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+        date:
+          type: string
+        merchant:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+      required:
+        - category
+        - description
+        - amount
+        - currency
+        - date
+
+    UpdateExpenseBody:
+      type: object
+      properties:
+        category:
+          type: string
+        description:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+        date:
+          type: string
+        merchant:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        status:
+          type: string
+
+    ExpenseReport:
+      type: object
+      properties:
+        id:
+          type: integer
+        tripId:
+          type: ["integer", "null"]
+        title:
+          type: string
+        status:
+          type: string
+          enum: [draft, submitted, under_review, approved, paid, rejected]
+        totalAmount:
+          type: number
+        currency:
+          type: string
+        expenseCount:
+          type: integer
+        submittedAt:
+          type: ["string", "null"]
+        approvedAt:
+          type: ["string", "null"]
+        paidAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required:
+        - id
+        - tripId
+        - title
+        - status
+        - totalAmount
+        - currency
+        - expenseCount
+        - submittedAt
+        - approvedAt
+        - paidAt
+        - createdAt
+
+    CreateExpenseReportBody:
+      type: object
+      properties:
+        tripId:
+          type: ["integer", "null"]
+        title:
+          type: string
+        expenseIds:
+          type: array
+          items:
+            type: integer
+      required:
+        - title
+
+    ExpenseSummary:
+      type: object
+      properties:
+        totalAmount:
+          type: number
+        currency:
+          type: string
+        byCategory:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExpenseCategoryBreakdown"
+        byDay:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExpenseDayBreakdown"
+        budgetUsed:
+          type: ["number", "null"]
+        budgetRemaining:
+          type: ["number", "null"]
+      required:
+        - totalAmount
+        - currency
+        - byCategory
+        - byDay
+        - budgetUsed
+        - budgetRemaining
+
+    ExpenseCategoryBreakdown:
+      type: object
+      properties:
+        category:
+          type: string
+        amount:
+          type: number
+        percentage:
+          type: number
+        count:
+          type: integer
+      required:
+        - category
+        - amount
+        - percentage
+        - count
+
+    ExpenseDayBreakdown:
+      type: object
+      properties:
+        date:
+          type: string
+        amount:
+          type: number
+      required:
+        - date
+        - amount
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        displayName:
+          type: ["string", "null"]
+        avatarUrl:
+          type: ["string", "null"]
+        nationality:
+          type: ["string", "null"]
+        dateOfBirth:
+          type: ["string", "null"]
+        phoneNumber:
+          type: ["string", "null"]
+        preferredCurrency:
+          type: string
+        preferredLanguage:
+          type: string
+        seatPreference:
+          type: ["string", "null"]
+        mealPreference:
+          type: ["string", "null"]
+        notificationsEnabled:
+          type: boolean
+        createdAt:
+          type: string
+      required:
+        - id
+        - email
+        - firstName
+        - lastName
+        - displayName
+        - avatarUrl
+        - nationality
+        - dateOfBirth
+        - phoneNumber
+        - preferredCurrency
+        - preferredLanguage
+        - seatPreference
+        - mealPreference
+        - notificationsEnabled
+        - createdAt
+
+    UpdateProfileBody:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        displayName:
+          type: ["string", "null"]
+        nationality:
+          type: ["string", "null"]
+        dateOfBirth:
+          type: ["string", "null"]
+        phoneNumber:
+          type: ["string", "null"]
+        preferredCurrency:
+          type: string
+        preferredLanguage:
+          type: string
+        seatPreference:
+          type: ["string", "null"]
+        mealPreference:
+          type: ["string", "null"]
+        notificationsEnabled:
+          type: boolean
+
+    TravelDocument:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+          enum: [passport, national_id, visa, vaccination, drivers_license, other]
+        name:
+          type: string
+        number:
+          type: ["string", "null"]
+        issuingCountry:
+          type: ["string", "null"]
+        expiryDate:
+          type: ["string", "null"]
+        daysUntilExpiry:
+          type: ["integer", "null"]
+        status:
+          type: string
+          enum: [valid, expiring_soon, expired]
+      required:
+        - id
+        - type
+        - name
+        - number
+        - issuingCountry
+        - expiryDate
+        - daysUntilExpiry
+        - status
+
+    CreateDocumentBody:
+      type: object
+      properties:
+        type:
+          type: string
+        name:
+          type: string
+        number:
+          type: ["string", "null"]
+        issuingCountry:
+          type: ["string", "null"]
+        expiryDate:
+          type: ["string", "null"]
+      required:
+        - type
+        - name
+
+    SavedLoyaltyProgram:
+      type: object
+      properties:
+        id:
+          type: integer
+        programName:
+          type: string
+        carrier:
+          type: string
+        membershipNumber:
+          type: string
+        tier:
+          type: ["string", "null"]
+        points:
+          type: ["integer", "null"]
+        expiryDate:
+          type: ["string", "null"]
+      required:
+        - id
+        - programName
+        - carrier
+        - membershipNumber
+        - tier
+        - points
+        - expiryDate
+
+    AddLoyaltyProgramBody:
+      type: object
+      properties:
+        programName:
+          type: string
+        carrier:
+          type: string
+        membershipNumber:
+          type: string
+        tier:
+          type: ["string", "null"]
+      required:
+        - programName
+        - carrier
+        - membershipNumber
+
+    LoyaltyAccount:
+      type: object
+      properties:
+        points:
+          type: integer
+        tier:
+          type: string
+          enum: [explorer, voyager, elite, legend]
+        tierName:
+          type: string
+        pointsToNextTier:
+          type: ["integer", "null"]
+        nextTier:
+          type: ["string", "null"]
+        annualSpend:
+          type: number
+        pointsExpiringSoon:
+          type: integer
+        expiryDate:
+          type: ["string", "null"]
+        earnRate:
+          type: number
+        benefits:
+          type: array
+          items:
+            type: string
+      required:
+        - points
+        - tier
+        - tierName
+        - pointsToNextTier
+        - nextTier
+        - annualSpend
+        - pointsExpiringSoon
+        - expiryDate
+        - earnRate
+        - benefits
+
+    LoyaltyTransaction:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+          enum: [earned, redeemed, expired, bonus]
+        points:
+          type: integer
+        description:
+          type: string
+        date:
+          type: string
+        bookingRef:
+          type: ["string", "null"]
+      required:
+        - id
+        - type
+        - points
+        - description
+        - date
+        - bookingRef
+
+    Reward:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        pointsCost:
+          type: integer
+        category:
+          type: string
+          enum: [flight, hotel, upgrade, lounge, experiences, merchandise, charity]
+        imageUrl:
+          type: ["string", "null"]
+        available:
+          type: boolean
+      required:
+        - id
+        - name
+        - description
+        - pointsCost
+        - category
+        - imageUrl
+        - available
+
+    PriceAlert:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+          enum: [flight, hotel, trip]
+        label:
+          type: string
+        currentPrice:
+          type: number
+        targetPrice:
+          type: number
+        currency:
+          type: string
+        priceChange:
+          type: ["number", "null"]
+        priceChangePercent:
+          type: ["number", "null"]
+        triggered:
+          type: boolean
+        active:
+          type: boolean
+        createdAt:
+          type: string
+      required:
+        - id
+        - type
+        - label
+        - currentPrice
+        - targetPrice
+        - currency
+        - priceChange
+        - priceChangePercent
+        - triggered
+        - active
+        - createdAt
+
+    CreatePriceAlertBody:
+      type: object
+      properties:
+        type:
+          type: string
+        label:
+          type: string
+        currentPrice:
+          type: number
+        targetPrice:
+          type: number
+        currency:
+          type: string
+      required:
+        - type
+        - label
+        - currentPrice
+        - targetPrice
+        - currency
+
+    CorporateOverview:
+      type: object
+      properties:
+        totalTravelers:
+          type: integer
+        activeTravelers:
+          type: integer
+        totalSpend:
+          type: number
+        budgetUsed:
+          type: number
+        totalBudget:
+          type: number
+        pendingApprovals:
+          type: integer
+        policyCompliance:
+          type: number
+        savingsVsPolicy:
+          type: number
+        carbonKg:
+          type: number
+        spendByMonth:
+          type: array
+          items:
+            $ref: "#/components/schemas/MonthlySpend"
+        spendByDepartment:
+          type: array
+          items:
+            $ref: "#/components/schemas/DepartmentSpend"
+      required:
+        - totalTravelers
+        - activeTravelers
+        - totalSpend
+        - budgetUsed
+        - totalBudget
+        - pendingApprovals
+        - policyCompliance
+        - savingsVsPolicy
+        - carbonKg
+        - spendByMonth
+        - spendByDepartment
+
+    MonthlySpend:
+      type: object
+      properties:
+        month:
+          type: string
+        amount:
+          type: number
+      required:
+        - month
+        - amount
+
+    DepartmentSpend:
+      type: object
+      properties:
+        department:
+          type: string
+        amount:
+          type: number
+        travelers:
+          type: integer
+        compliance:
+          type: number
+      required:
+        - department
+        - amount
+        - travelers
+        - compliance
+
+    CorporateTraveler:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        department:
+          type: string
+        role:
+          type: string
+        totalSpend:
+          type: number
+        tripsCount:
+          type: integer
+        complianceRate:
+          type: number
+        currentLocation:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [idle, traveling, in_approval]
+      required:
+        - id
+        - name
+        - email
+        - department
+        - role
+        - totalSpend
+        - tripsCount
+        - complianceRate
+        - currentLocation
+        - status
+
+    Approval:
+      type: object
+      properties:
+        id:
+          type: integer
+        travelerName:
+          type: string
+        travelerEmail:
+          type: string
+        department:
+          type: string
+        tripDescription:
+          type: string
+        destination:
+          type: string
+        travelDates:
+          type: string
+        totalAmount:
+          type: number
+        currency:
+          type: string
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+        reason:
+          type: ["string", "null"]
+        submittedAt:
+          type: string
+        reviewedAt:
+          type: ["string", "null"]
+        policyCompliant:
+          type: boolean
+        policyNotes:
+          type: ["string", "null"]
+      required:
+        - id
+        - travelerName
+        - travelerEmail
+        - department
+        - tripDescription
+        - destination
+        - travelDates
+        - totalAmount
+        - currency
+        - status
+        - reason
+        - submittedAt
+        - reviewedAt
+        - policyCompliant
+        - policyNotes
+
+    RejectRequestBody:
+      type: object
+      properties:
+        reason:
+          type: string
+      required:
+        - reason
+
+    TravelPolicy:
+      type: object
+      properties:
+        id:
+          type: integer
+        maxHotelRatePerNight:
+          type: number
+        maxFlightClassShortHaul:
+          type: string
+        maxFlightClassLongHaul:
+          type: string
+        advanceBookingDays:
+          type: integer
+        requiresApprovalAbove:
+          type: number
+        perDiemRate:
+          type: number
+        currency:
+          type: string
+        preferredAirlines:
+          type: array
+          items:
+            type: string
+        preferredHotelChains:
+          type: array
+          items:
+            type: string
+        updatedAt:
+          type: string
+      required:
+        - id
+        - maxHotelRatePerNight
+        - maxFlightClassShortHaul
+        - maxFlightClassLongHaul
+        - advanceBookingDays
+        - requiresApprovalAbove
+        - perDiemRate
+        - currency
+        - preferredAirlines
+        - preferredHotelChains
+        - updatedAt
+
+    UpdateTravelPolicyBody:
+      type: object
+      properties:
+        maxHotelRatePerNight:
+          type: number
+        maxFlightClassShortHaul:
+          type: string
+        maxFlightClassLongHaul:
+          type: string
+        advanceBookingDays:
+          type: integer
+        requiresApprovalAbove:
+          type: number
+        perDiemRate:
+          type: number
+        preferredAirlines:
+          type: array
+          items:
+            type: string
+        preferredHotelChains:
+          type: array
+          items:
+            type: string
+
+    SpendReport:
+      type: object
+      properties:
+        period:
+          type: string
+        totalSpend:
+          type: number
+        currency:
+          type: string
+        groupedData:
+          type: array
+          items:
+            $ref: "#/components/schemas/SpendGroup"
+        topCategories:
+          type: array
+          items:
+            $ref: "#/components/schemas/SpendCategory"
+      required:
+        - period
+        - totalSpend
+        - currency
+        - groupedData
+        - topCategories
+
+    SpendGroup:
+      type: object
+      properties:
+        label:
+          type: string
+        amount:
+          type: number
+        count:
+          type: integer
+        compliance:
+          type: number
+      required:
+        - label
+        - amount
+        - count
+        - compliance
+
+    SpendCategory:
+      type: object
+      properties:
+        category:
+          type: string
+        amount:
+          type: number
+        percentage:
+          type: number
+      required:
+        - category
+        - amount
+        - percentage
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+          enum: [booking_confirmation, price_drop, check_in_reminder, flight_status, visa_expiry, approval_required, safety_alert, points_expiry, general]
+        title:
+          type: string
+        message:
+          type: string
+        isRead:
+          type: boolean
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+        actionUrl:
+          type: ["string", "null"]
+        actionLabel:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required:
+        - id
+        - type
+        - title
+        - message
+        - isRead
+        - priority
+        - actionUrl
+        - actionLabel
+        - createdAt
