@@ -12,7 +12,7 @@ router.get("/expenses", async (req, res) => {
   if (tripId) expenses = expenses.filter((e) => e.tripId === parseInt(tripId as string));
   if (status && typeof status === "string") expenses = expenses.filter((e) => e.status === status);
   if (category && typeof category === "string") expenses = expenses.filter((e) => e.category === category);
-  res.json({ expenses, total: expenses.length });
+  res.json(expenses);
 });
 
 router.post("/expenses", async (req, res) => {
@@ -80,31 +80,32 @@ router.post("/expenses/reports", async (req, res) => {
 
 router.get("/expenses/summary", async (req, res) => {
   const userId = 1;
-  const { tripId, period } = req.query;
+  const { tripId } = req.query;
   let expenses = await db.select().from(expensesTable).where(eq(expensesTable.userId, userId));
   if (tripId) expenses = expenses.filter((e) => e.tripId === parseInt(tripId as string));
 
-  const byCategory: Record<string, number> = {};
+  const byCategoryMap: Record<string, number> = {};
   let total = 0;
   for (const e of expenses) {
     const amt = parseFloat(e.amount as string);
-    byCategory[e.category] = (byCategory[e.category] ?? 0) + amt;
+    byCategoryMap[e.category] = (byCategoryMap[e.category] ?? 0) + amt;
     total += amt;
   }
 
-  const categories = Object.entries(byCategory).map(([category, amount]) => ({
+  const byCategory = Object.entries(byCategoryMap).map(([category, amount]) => ({
     category,
     amount,
-    percentage: total > 0 ? ((amount / total) * 100).toFixed(1) : "0",
+    percentage: total > 0 ? parseFloat(((amount / total) * 100).toFixed(1)) : 0,
+    count: expenses.filter((e) => e.category === category).length,
   })).sort((a, b) => b.amount - a.amount);
 
   res.json({
-    total,
+    totalAmount: total,
     currency: "USD",
-    categories,
-    pending: expenses.filter((e) => e.status === "pending").reduce((acc, e) => acc + parseFloat(e.amount as string), 0),
-    approved: expenses.filter((e) => e.status === "approved").reduce((acc, e) => acc + parseFloat(e.amount as string), 0),
-    count: expenses.length,
+    byCategory,
+    byDay: [],
+    budgetUsed: null,
+    budgetRemaining: null,
   });
 });
 

@@ -75,17 +75,19 @@ router.delete("/trips/:id", async (req, res) => {
   res.status(204).send();
 });
 
-router.get("/trips/:id/itinerary", async (req, res) => {
+async function getItineraryHandler(req: import("express").Request, res: import("express").Response) {
   const tripId = parseInt(req.params.id);
   const days = await db.select().from(itineraryDaysTable).where(eq(itineraryDaysTable.tripId, tripId)).orderBy(asc(itineraryDaysTable.dayNumber));
   const activities = await db.select().from(activitiesTable).where(eq(activitiesTable.tripId, tripId)).orderBy(asc(activitiesTable.sortOrder));
-
   const result = days.map((day) => ({
     ...day,
     activities: activities.filter((a) => a.dayId === day.id),
   }));
   res.json(result);
-});
+}
+
+router.get("/trips/:id/itinerary", getItineraryHandler);
+router.get("/trips/:id/itinerary-days", getItineraryHandler);
 
 router.post("/trips/:id/activities", async (req, res) => {
   const tripId = parseInt(req.params.id);

@@ -56,7 +56,7 @@ router.get("/corporate/approvals", async (req, res) => {
   const { status } = req.query;
   let approvals = await db.select().from(approvalsTable);
   if (status && typeof status === "string") approvals = approvals.filter((a) => a.status === status);
-  res.json({ approvals, total: approvals.length });
+  res.json(approvals);
 });
 
 router.post("/corporate/approvals/:id/approve", async (req, res) => {

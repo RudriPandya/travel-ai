@@ -14,7 +14,7 @@ router.get("/bookings", async (req, res) => {
   if (status && typeof status === "string") bookings = bookings.filter((b) => b.status === status);
   if (tripId) bookings = bookings.filter((b) => b.tripId === parseInt(tripId as string));
 
-  res.json({ bookings, total: bookings.length });
+  res.json(bookings);
 });
 
 router.post("/bookings", async (req, res) => {
