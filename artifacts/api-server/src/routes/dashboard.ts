@@ -38,7 +38,7 @@ router.get("/dashboard/stats", async (req, res) => {
     priceAlerts: alerts.length,
     unreadNotifications: notifications.length,
     totalSpend,
-    savedOnDeals: 842,
+    savedOnBookings: 842,
     carbonOffset: 12.4,
   });
 });
