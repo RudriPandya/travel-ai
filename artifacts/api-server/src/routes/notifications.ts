@@ -12,7 +12,7 @@ router.get("/notifications", async (req, res) => {
     .where(eq(notificationsTable.userId, userId))
     .orderBy(desc(notificationsTable.createdAt));
   if (unread === "true") notifications = notifications.filter((n) => !n.isRead);
-  res.json({ notifications, total: notifications.length, unread: notifications.filter((n) => !n.isRead).length });
+  res.json(notifications);
 });
 
 router.post("/notifications/:id/read", async (req, res) => {
