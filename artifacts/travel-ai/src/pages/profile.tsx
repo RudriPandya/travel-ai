@@ -1,13 +1,64 @@
-import React from "react";
-import { useGetProfile } from "@workspace/api-client-react";
+import React, { useState, useEffect } from "react";
+import { useGetProfile, useUpdateProfile } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { User, Plane, Settings } from "lucide-react";
+import { User, Plane, CheckCircle2, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Profile() {
   const { data: profile, isLoading } = useGetProfile();
+  const updateProfile = useUpdateProfile();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const [personal, setPersonal] = useState({ firstName: "", lastName: "" });
+  const [prefs, setPrefs] = useState({ seatPreference: "", mealPreference: "" });
+  const [savedPersonal, setSavedPersonal] = useState(false);
+  const [savedPrefs, setSavedPrefs] = useState(false);
+
+  useEffect(() => {
+    if (profile) {
+      setPersonal({ firstName: profile.firstName || "", lastName: profile.lastName || "" });
+      setPrefs({ seatPreference: profile.seatPreference || "", mealPreference: profile.mealPreference || "" });
+    }
+  }, [profile]);
+
+  const handleSavePersonal = () => {
+    updateProfile.mutate(
+      { data: { firstName: personal.firstName, lastName: personal.lastName } },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["getProfile"] });
+          setSavedPersonal(true);
+          setTimeout(() => setSavedPersonal(false), 2000);
+          toast({ title: "Profile updated", description: "Your personal information has been saved." });
+        },
+        onError: () => {
+          toast({ title: "Save failed", description: "Could not save profile. Please try again.", variant: "destructive" });
+        },
+      }
+    );
+  };
+
+  const handleSavePrefs = () => {
+    updateProfile.mutate(
+      { data: { seatPreference: prefs.seatPreference, mealPreference: prefs.mealPreference } },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["getProfile"] });
+          setSavedPrefs(true);
+          setTimeout(() => setSavedPrefs(false), 2000);
+          toast({ title: "Preferences saved", description: "Your travel preferences have been updated." });
+        },
+        onError: () => {
+          toast({ title: "Save failed", description: "Could not save preferences. Please try again.", variant: "destructive" });
+        },
+      }
+    );
+  };
 
   if (isLoading) {
     return <div className="space-y-8 max-w-3xl mx-auto"><Skeleton className="h-64 w-full" /></div>;
@@ -31,11 +82,19 @@ export default function Profile() {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">First Name</label>
-              <Input defaultValue={profile?.firstName} className="bg-background border-border" />
+              <Input
+                value={personal.firstName}
+                onChange={(e) => setPersonal({ ...personal, firstName: e.target.value })}
+                className="bg-background border-border"
+              />
             </div>
             <div className="space-y-2">
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Last Name</label>
-              <Input defaultValue={profile?.lastName} className="bg-background border-border" />
+              <Input
+                value={personal.lastName}
+                onChange={(e) => setPersonal({ ...personal, lastName: e.target.value })}
+                className="bg-background border-border"
+              />
             </div>
           </div>
           <div className="space-y-2">
@@ -43,7 +102,19 @@ export default function Profile() {
             <Input defaultValue={profile?.email} disabled className="bg-muted border-border opacity-70" />
           </div>
           <div className="pt-4 text-right">
-            <Button className="bg-primary hover:bg-primary/90">Save Changes</Button>
+            <Button
+              className="bg-primary hover:bg-primary/90 min-w-[130px]"
+              onClick={handleSavePersonal}
+              disabled={updateProfile.isPending}
+            >
+              {updateProfile.isPending ? (
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</>
+              ) : savedPersonal ? (
+                <><CheckCircle2 className="mr-2 h-4 w-4 text-emerald-400" /> Saved!</>
+              ) : (
+                "Save Changes"
+              )}
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -59,15 +130,37 @@ export default function Profile() {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Seat Preference</label>
-              <Input defaultValue={profile?.seatPreference || ''} placeholder="e.g. Aisle" className="bg-background border-border" />
+              <Input
+                value={prefs.seatPreference}
+                onChange={(e) => setPrefs({ ...prefs, seatPreference: e.target.value })}
+                placeholder="e.g. Aisle"
+                className="bg-background border-border"
+              />
             </div>
             <div className="space-y-2">
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Meal Preference</label>
-              <Input defaultValue={profile?.mealPreference || ''} placeholder="e.g. Vegetarian" className="bg-background border-border" />
+              <Input
+                value={prefs.mealPreference}
+                onChange={(e) => setPrefs({ ...prefs, mealPreference: e.target.value })}
+                placeholder="e.g. Vegetarian"
+                className="bg-background border-border"
+              />
             </div>
           </div>
-           <div className="pt-4 text-right">
-            <Button className="bg-primary hover:bg-primary/90">Save Preferences</Button>
+          <div className="pt-4 text-right">
+            <Button
+              className="bg-primary hover:bg-primary/90 min-w-[150px]"
+              onClick={handleSavePrefs}
+              disabled={updateProfile.isPending}
+            >
+              {updateProfile.isPending ? (
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</>
+              ) : savedPrefs ? (
+                <><CheckCircle2 className="mr-2 h-4 w-4 text-emerald-400" /> Saved!</>
+              ) : (
+                "Save Preferences"
+              )}
+            </Button>
           </div>
         </CardContent>
       </Card>
