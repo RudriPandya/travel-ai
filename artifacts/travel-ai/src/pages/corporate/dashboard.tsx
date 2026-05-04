@@ -77,8 +77,8 @@ export default function CorporateDashboard() {
               <span className="text-sm font-semibold uppercase tracking-wider">Active Travelers</span>
               <Users className="h-4 w-4 text-primary" />
             </div>
-            <div className="text-3xl font-bold tracking-tight">42</div>
-            <div className="text-xs mt-2 text-muted-foreground">Currently on the road</div>
+            <div className="text-3xl font-bold tracking-tight">{overview?.activeTravelers ?? 0}</div>
+            <div className="text-xs mt-2 text-muted-foreground">of {overview?.totalTravelers ?? 0} total travelers</div>
           </CardContent>
         </Card>
       </div>

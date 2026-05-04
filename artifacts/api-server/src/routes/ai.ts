@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "../db.js";
-import { chatMessagesTable, tripsTable, itineraryDaysTable, activitiesTable } from "@workspace/db";
+import { chatMessagesTable } from "@workspace/db";
 import { eq, asc } from "drizzle-orm";
 import OpenAI from "openai";
 
@@ -23,55 +23,52 @@ Be concise but rich with specific, actionable insights. Avoid generic advice —
 
 const PLANNER_SYSTEM_PROMPT = `You are VoyageAI's trip planning engine. Generate a detailed, day-by-day travel itinerary in JSON format.
 
-You MUST respond with valid JSON that follows this exact structure:
+You MUST respond with valid JSON that follows this EXACT structure (no variants array, just a single flat itinerary):
 {
   "name": "Trip name",
   "destination": "City, Country",
   "summary": "2-3 sentence trip overview",
-  "totalBudget": 3500,
-  "variants": [
+  "duration": 10,
+  "estimatedBudget": 3500,
+  "days": [
     {
-      "name": "Budget",
-      "totalBudget": 2200,
-      "description": "1 sentence description",
-      "days": [
+      "dayNumber": 1,
+      "title": "Day theme",
+      "estimatedCost": 150,
+      "activities": [
         {
-          "dayNumber": 1,
-          "date": "2025-04-01",
-          "title": "Day theme",
-          "estimatedCost": 150,
-          "activities": [
-            {
-              "timeSlot": "morning|afternoon|evening|flexible",
-              "name": "Activity name",
-              "description": "2-3 sentences with specific details, why it's great",
-              "location": "Specific venue/address",
-              "estimatedCost": 0,
-              "duration": 120,
-              "category": "culture|food|transport|accommodation|sightseeing|adventure|wellness|nightlife|shopping",
-              "tips": "1 specific insider tip"
-            }
-          ]
+          "timeSlot": "morning",
+          "name": "Activity name",
+          "description": "2-3 sentences with specific details, why it's great",
+          "location": "Specific venue/address",
+          "estimatedCost": 0,
+          "duration": 120,
+          "category": "culture",
+          "tips": "1 specific insider tip"
         }
       ]
-    },
-    { "name": "Balanced", ... },
-    { "name": "Premium", ... }
+    }
   ]
 }
 
-Keep each day to 3-5 activities. Be specific with venues, prices, and timing. Make the itinerary genuinely exciting.`;
+Keep each day to 3-5 activities. Be specific with venues, prices, and timing. Make the itinerary genuinely exciting. The duration field is the total number of days as a number.`;
 
 router.post("/ai/plan", async (req, res) => {
-  const { prompt } = req.body;
+  const { prompt, variant } = req.body;
   if (!prompt) { res.status(400).json({ error: "prompt is required" }); return; }
+
+  const variantContext = variant === "budget"
+    ? "Optimize for budget travel — hostels, street food, free attractions, local transport."
+    : variant === "premium"
+    ? "Optimize for premium/luxury travel — 5-star hotels, fine dining, private tours, business class."
+    : "Balance comfort and cost — mid-range hotels, mix of local and nice restaurants, some splurges.";
 
   try {
     const completion = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
         { role: "system", content: PLANNER_SYSTEM_PROMPT },
-        { role: "user", content: prompt },
+        { role: "user", content: `${prompt}\n\nStyle: ${variantContext}` },
       ],
       response_format: { type: "json_object" },
       temperature: 0.8,
