@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "../db.js";
 import { hotelsTable, hotelRoomsTable } from "@workspace/db";
-import { eq, ilike, or } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 const router = Router();
 
@@ -18,12 +18,16 @@ router.get("/hotels/search", async (req, res) => {
 
   const result = hotels.map((h) => ({
     ...h,
+    pricePerNight: parseFloat(h.pricePerNight as string),
+    reviewScore: parseFloat(h.reviewScore as string),
+    dealScore: parseFloat(h.dealScore as string),
+    distanceFromCenter: parseFloat(h.distanceFromCenter as string),
     nights: checkIn && checkOut
       ? Math.max(1, Math.ceil((new Date(checkOut as string).getTime() - new Date(checkIn as string).getTime()) / 86400000))
       : 1,
   }));
 
-  res.json({ hotels: result, total: result.length });
+  res.json(result);
 });
 
 router.get("/hotels/:id", async (req, res) => {
